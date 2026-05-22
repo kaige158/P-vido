@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# Conda
+*.conda
+
+# IDE
+.vscode/
+.idea/
+
+# 输出
+output/*.wav
+output/*.mp3
+output/*.m4a
+output/*.json
+output/*.log
+!output/.gitkeep
+
+# 数据
+data/raw/*.wav
+data/raw/*.mp3
+data/processed/*.wav
+data/speakers/*.pth
+data/speakers/*.pt
+!data/**/.gitkeep
+
+# 文档
+docs/*.txt
+docs/*.pdf
+
+# 便携工具
+tools/
+
+# 模型权重
+third_party/
+*.pth
+*.pt
+*.ckpt
+*.onnx
+*.safetensors
+
+# 便携环境压缩包
+env.zip
+
+# 环境变量
+.env
+.env.local
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# 临时
+*.tmp
+*.temp

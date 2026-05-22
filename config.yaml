@@ -1,0 +1,111 @@
+# 语音克隆项目配置文件
+# 当前硬件：RTX 3050 笔记本 · 4GB 显存（2026-05-22 确认）
+
+# ---- 硬件（4GB 笔记本专用）----
+hardware:
+  profile: rtx3050_laptop_4gb
+  gpu_model: NVIDIA GeForce RTX 3050 Laptop GPU
+  gpu_memory_gb: 4
+  device: cuda                    # 推理用 GPU；OOM 时改为 cpu（很慢）
+  mode: zero_shot_only            # zero_shot_only | finetune_cpu（不推荐日常）
+  allow_finetune_on_gpu: false    # 4GB 上微调极易 OOM
+  cosyvoice2_enabled: false       # 模型过大，本机不装
+  system_ram_gb_min: 16           # 低于 16GB 时关闭其它大程序
+
+# ---- 路径 ----
+paths:
+  data_dir: data/
+  raw_dir: data/raw/
+  processed_dir: data/processed/
+  speakers_dir: data/speakers/
+  docs_dir: docs/
+  output_dir: output/
+  pretrained_dir: third_party/GPT-SoVITS/pretrained_models/
+
+# ---- 音频 ----
+audio:
+  sample_rate: 44100
+  channels: 1
+  format: wav
+  target_lufs: -16
+  silence_duration_ms: 400       # 4GB 分段多，略长停顿更自然
+
+# ---- TTS 引擎 ----
+tts:
+  default_engine: gpt_sovits
+  engines:
+    gpt_sovits:
+      # 零样本：5~15 秒参考音频 + 对应文本（必须与音频一致）
+      ref_audio_path: data/speakers/default/ref_8s.WAV
+      # 与 ref_19s.WAV 朗读内容一致（勿改字）
+      prompt_text: |
+        雨下得毫无预兆。
+        林晚合上笔记本电脑时，窗外已经是一片模糊的水幕。
+      prompt_lang: zh
+      speed: 1.0                   # 0.9~1.1，过长文本可略降到 0.95
+      api_url: http://127.0.0.1:9880
+      speaker_name: default
+      # WebUI 推理建议（手动在界面设置，与脚本无关）：
+      # - 使用 v2 轻量流程，勿同时开 UVR5 / 训练
+      # - 单次推理文本 < 150 字
+      # - 半精度 FP16 开启（默认）
+    cosyvoice2:
+      enabled: false
+      api_url: http://127.0.0.1:5003
+      speaker: default
+
+# ---- 文档分段（4GB：短段防 OOM）----
+segment:
+  max_chars: 120                 # 单段上限；OOM 时改为 80
+  min_chars: 30
+  split_by: sentence
+  enable_dash_split: true
+  pause_between_segments_sec: 2  # 批量时给 GPU 释放显存（脚本/API 侧实现）
+
+# ---- 语气词 ----
+fillers:
+  enabled: true
+  rate: 0.05                     # 4GB 段短，略降插入率
+  words:
+    - "嗯"
+    - "啊"
+    - "那个"
+    - "对吧"
+    - "其实呢"
+  avoid_in:
+    - headline
+    - code_block
+    - list_item
+  max_per_paragraph: 2
+
+# ---- SSML / 标记 ----
+ssml:
+  enabled: false
+  markers:
+    pause:
+      pattern: "[pause:{duration}]"
+    breath:
+      pattern: "[breath]"
+    emphasis:
+      pattern: "<emphasis>{text}</emphasis>"
+
+# ---- 导出 ----
+export:
+  formats:
+    - wav
+    - mp3
+  mp3_bitrate_k: 128             # 笔记本省磁盘
+  generate_subtitle: true
+  chapter_metadata: true
+
+# ---- 批量队列 ----
+batch:
+  resume_on_error: true
+  retry_count: 1                 # OOM 重试无益，少重试、改短段落
+  state_file: output/state.json
+  preview_first_segments: 0      # 全量合成（调试时设为 3）
+
+# ---- 日志 ----
+logging:
+  level: INFO
+  file: output/synthesis.log
