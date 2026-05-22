@@ -313,10 +313,10 @@ def create_ui():
     cfg = load_config()
     tts_cfg = cfg.get("tts", {}).get("engines", {}).get("gpt_sovits", {})
 
-    with gr.Blocks(title="语音克隆朗读系统", css=CSS, theme=gr.themes.Soft()) as app:
+    with gr.Blocks(title="文人语音克隆朗读系统", css=CSS, theme=gr.themes.Soft()) as app:
         gr.HTML("""
         <div class="header">
-            <h1>🎙 语音克隆朗读系统</h1>
+            <h1>文人语音克隆朗读系统</h1>
             <p>上传文档 → 文字处理 → TTS 合成 → 音频导出 | GPU: RTX 3050 4GB</p>
         </div>
         """)
@@ -614,7 +614,7 @@ def create_ui():
         # ── 页脚 ──
         gr.HTML("""
         <div style="text-align:center;padding:1em;color:#888;font-size:0.85em;">
-            <p>GPT-SoVITS v2 · CUDA GPU · 零样本推理</p>
+            <p>文人朗读 · GPT-SoVITS v2 · CUDA GPU · 零样本推理</p>
         </div>
         """)
 
@@ -624,7 +624,7 @@ def create_ui():
 # ── 入口 ─────────────────────────────────────────────────────
 if __name__ == "__main__":
     print("=" * 60)
-    print("  语音克隆朗读系统 WebUI")
+    print("  文人语音克隆朗读系统 WebUI")
     print("  GPU: NVIDIA RTX 3050 Laptop 4GB")
     print("=" * 60)
     print()
