@@ -89,6 +89,16 @@ ssml:
     emphasis:
       pattern: "<emphasis>{text}</emphasis>"
 
+# ---- 情绪预设 ----
+emotion:
+  default: neutral
+  presets:
+    neutral: { ref: data/speakers/default/ref_8s.WAV, speed: 1.0, label: "中性" }
+    angry:   { ref: data/speakers/default/ref_8s_angry.WAV, speed: 1.08, label: "生气" }
+    happy:   { ref: data/speakers/default/ref_8s_happy.WAV, speed: 1.05, label: "高兴" }
+    sad:     { ref: data/speakers/default/ref_8s_sad.WAV, speed: 0.90, label: "忧郁" }
+    loving:  { ref: data/speakers/default/ref_8s_loving.WAV, speed: 0.95, label: "喜爱" }
+
 # ---- 导出 ----
 export:
   formats:

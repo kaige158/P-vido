@@ -389,16 +389,29 @@ def create_ui():
             with gr.TabItem("🎤 TTS 合成"):
                 gr.Markdown("### 合成设置")
 
+                emotion_cfg = cfg.get("emotion", {})
+                emotion_presets = emotion_cfg.get("presets", {})
+                emotion_choices = [f"{k} ({v['label']})" for k, v in emotion_presets.items()]
+                default_emotion = emotion_cfg.get("default", "neutral")
+
                 with gr.Row():
+                    emotion_dropdown = gr.Dropdown(
+                        label="情绪",
+                        choices=emotion_choices,
+                        value=f"{default_emotion} ({emotion_presets[default_emotion]['label']})",
+                        scale=1,
+                    )
                     speed_slider = gr.Slider(
                         label="语速",
                         minimum=0.85, maximum=1.15, step=0.05,
                         value=tts_cfg.get("speed", 1.0),
+                        scale=1,
                     )
                     max_chars_slider = gr.Slider(
                         label="每段最大字数（4GB 建议 ≤120）",
                         minimum=60, maximum=200, step=10,
                         value=cfg.get("segment", {}).get("max_chars", 120),
+                        scale=1,
                     )
 
                 gr.Markdown(SPEED_INFO)
@@ -416,11 +429,17 @@ def create_ui():
                     segment_audio = gr.Audio(label="分段试听", type="filepath", scale=2)
                     merged_audio = gr.Audio(label="完整音频", type="filepath", scale=2)
 
-                def handle_synthesize(text, speed, max_chars):
+                def handle_synthesize(text, speed, max_chars, emotion):
                     progress = gr.Progress()
                     if not text or text.startswith("请上传") or text.startswith("错误"):
                         yield "请先在【文本输入】中处理文本", "", None, None
                         return
+
+                    # 解析情绪预设
+                    emotion_key = emotion.split(" (")[0] if " (" in emotion else emotion
+                    emo_cfg = load_config().get("emotion", {})
+                    emo_presets = emo_cfg.get("presets", {})
+                    emo_preset = emo_presets.get(emotion_key, {})
 
                     import re
                     sentences = re.split(r"(?<=[。！？])\s*", text)
@@ -442,10 +461,18 @@ def create_ui():
                         return
 
                     tts, model_cfg = get_tts_instance()
-                    ref_audio = model_cfg["ref_audio_path"]
+                    # 情绪参考音频优先
+                    ref_audio = emo_preset.get("ref", "") if emo_preset else ""
+                    if ref_audio and not os.path.isabs(ref_audio):
+                        ref_audio = str((_PROJECT_DIR / ref_audio).resolve())
+                    if not ref_audio or not os.path.exists(ref_audio):
+                        ref_audio = model_cfg["ref_audio_path"]
                     if not ref_audio or not os.path.exists(ref_audio):
                         yield "参考音频不存在！请检查 config.yaml → ref_audio_path", "", None, None
                         return
+                    # 情绪语速优先，用户手动 speed 作为微调乘数
+                    emo_speed = emo_preset.get("speed", 1.0) if emo_preset else 1.0
+                    effective_speed = speed * emo_speed
 
                     import numpy as np
                     import soundfile as sf
@@ -478,7 +505,7 @@ def create_ui():
                                 "top_k": 15, "top_p": 1.0, "temperature": 1.0,
                                 "text_split_method": "cut1",
                                 "batch_size": 1,
-                                "speed_factor": speed,
+                                "speed_factor": effective_speed,
                                 "split_bucket": True,
                                 "return_fragment": False,
                                 "fragment_interval": 0.3,
@@ -538,7 +565,7 @@ def create_ui():
 
                 synthesize_btn.click(
                     fn=handle_synthesize,
-                    inputs=[text_editor, speed_slider, max_chars_slider],
+                    inputs=[text_editor, speed_slider, max_chars_slider, emotion_dropdown],
                     outputs=[progress_status, segment_info, segment_audio, merged_audio],
                 )
 
